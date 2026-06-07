@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>換乘水果 Transit Fruits - 戀愛實境秀</title>
+    <style>
+        /* 全域樣式：營造《換乘戀愛》粉紅浪漫、高質感的微醺氛圍 */
+        :root {
+            --primary-pink: #ff758c;
+            --secondary-pink: #ff7eb3;
+            --dark-berry: #2b101d;
+            --light-cream: #fff5f6;
+            --judge-gold: #d4af37;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Noto Sans TC', sans-serif;
+            background-color: var(--light-cream);
+            color: var(--dark-berry);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* 畫布樣式：用於人物介紹按鈕噴出特效 */
+        #effectCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none; /* 讓點擊事件可以穿透 */
+            z-index: 9999;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+            color: white;
+            text-align: center;
+            padding: 4rem 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin: 0;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 節目介紹區塊 */
+        .intro-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 30px rgba(255, 117, 140, 0.1);
+            text-align: center;
+        }
+
+        .intro-section h2 {
+            color: var(--primary-pink);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 影音企劃區塊 */
+        .media-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .media-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .media-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .media-card h3 {
+            margin-top: 0;
+            color: var(--primary-pink);
+        }
+
+        .media-placeholder {
+            width: 100%;
+            height: 360px;
+            background-color: #ffeef1;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            color: #aaa;
+        }
+
+        .media-placeholder iframe {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 區塊標題 */
+        .section-title {
+            text-align: center;
+            color: var(--primary-pink);
+            font-size: 2rem;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-pink);
+            margin: 10px auto 0 auto;
+            border-radius: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 117, 140, 0.15);
+        }
+
+        .card.judge-card {
+            border-top: 4px solid var(--judge-gold);
+        }
+
+        /* 【解決方案 1】調整頭像區塊高度，使其容納直式影片 */
+        .avatar-box {
+            height: 320px;
+            background-color: #ffeef1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-box iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 【解決方案 1】增加上方的內距 padding，完美隔開 Google 雲端硬碟的懸浮控制列 */
+        .card-body {
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+            background-color: #fff;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            margin: 0 0 0.5rem 0;
+            color: var(--dark-berry);
+        }
+
+        .card-tag {
+            display: inline-block;
+            background: #ffeef1;
+            color: var(--primary-pink);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .card-tag.judge-tag {
+            background: #fbf5e6;
+            color: var(--judge-gold);
+        }
+
+        /* 劇組分工表樣式 */
+        .crew-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+
+        .crew-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+
+        .crew-table tr {
+            border-bottom: 1px solid #ffeef1;
+        }
+
+        .crew-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .crew-table td {
+            padding: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .crew-role {
+            font-weight: bold;
+            color: var(--primary-pink);
+            width: 30%;
+        }
+
+        .crew-name {
+            color: var(--dark-berry);
+            width: 70%;
+        }
+
+        /* 幕後花絮左右切換 Slider 樣式 */
+        .bts-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            text-align: center;
+        }
+
+        .slider-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            background: #000;
+            height: 450px;
+        }
+
+        /* 【解決方案 2】改用 slider-item 類別，使其可以完美包容影片或圖片 */
+        .slider-item {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .slider-item.active {
+            display: block;
+            animation: fadeEffect 0.5s ease-in-out;
+        }
+
+        .slider-item iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @keyframes fadeEffect {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            color: var(--dark-berry);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .slider-btn:hover {
+            background: var(--primary-pink);
+            color: white;
+        }
+
+        .slider-btn.prev { left: 20px; }
+        .slider-btn.next { right: 20px; }
+
+        .slider-caption-box {
+            max-width: 800px;
+            margin: 1.5rem auto 0 auto;
+            background: #ffeef1;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 5px solid var(--primary-pink);
+            text-align: left;
+            min-height: 80px;
+        }
+
+        .slider-caption-title {
+            font-weight: bold;
+            color: var(--primary-pink);
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .slider-caption-text {
+            margin: 0;
+            color: var(--dark-berry);
+            font-size: 0.95rem;
+        }
+
+        /* 互動按鈕樣式 */
+        .btn {
+            background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 117, 140, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .btn.judge-btn {
+            background: linear-gradient(135deg, #d4af37, #f3e5ab);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            color: #4a3b00;
+            font-weight: bold;
+        }
+
+        /* 互動心跳彈窗 */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .popup {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: popupAnim 0.3s ease;
+        }
+
+        @keyframes popupAnim {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .popup h3 {
+            color: var(--primary-pink);
+            margin-top: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="effectCanvas"></canvas>
+
+    <header>
+        <h1>換乘水果 <span style="font-size: 1.5rem; display: block; margin-top: 5px;">Transit Fruits</span></h1>
+        <p>「在成熟與腐爛之間，我們選擇了再次相遇。」—— 最受矚目的 AI 水果戀愛實境秀</p>
+    </header>
+
+    <div class="container">
+
+        <section class="intro-section">
+            <h2>關於《換乘水果》</h2>
+            <p>這是一檔將「AI 擬人化水果」聚集在同一座神祕果園別墅的戀愛綜藝。這裡有著多汁的誘惑、酸甜的過往，以及無法預測的化學反應。參賽的水果們必須在隱瞞前任（Ex）身份的情況下，與新的人選展開同居生活。究竟誰能迎來甜蜜的熟成，誰又會淪為酸澀的遺憾？</p>
+            <p style="font-style: italic; color: #888;">風格融入：《單身即地獄》的辛辣與台詞 ✕ 《換乘戀愛》的揪心淚水與前任修羅場</p>
+            <button class="btn" onclick="showPopup('全劇一共 16 集，每週三早上 9 點 20 準時在小麥平台獨家上線！準備好你的衛生紙與爆米花。')">追蹤最新播出時間</button>
+        </section>
+
+        <section class="media-section">
+            <div class="media-card">
+                <h3>前導宣傳海報 (AI風格)</h3>
+                <div class="media-placeholder" style="background: transparent;">
+                    <iframe src="https://drive.google.com/file/d/1TJ3EZp1xf2aGD5fxQj8EaFfzR467XsOv/preview" width="100%" height="100%" allowfullscreen style="border: none; border-radius: 15px;"></iframe>
+                </div>
+                <p>海報焦點：多汁(Juicy)與冷酷的完美(棒)結合</p>
+            </div>
+            
+            <div class="media-card">
+                <h3>首波虐心預告片</h3>
+                <div class="media-placeholder" style="background: transparent;">
+                    <iframe src="https://drive.google.com/file/d/17EeI7yyBct8W49WyzLNb8vLtAXNv5-kW/preview" width="100%" height="360" allow="autoplay" allowfullscreen style="border: none;"></iframe>
+                </div>
+                <p>「你…看著我的時候，想到的還是那個沒洗乾淨的櫻桃嗎？」</p>
+            </div>
+        </section>
+
+        <section class="members-section">
+            <h2 class="section-title">登場水果成員 (Cast)</h2>
+            <div class="grid">
+                
+                <div class="card">
+                    <div class="avatar-box">
+                        <iframe src="https://drive.google.com/file/d/1qeNGJ2AkZERBOFBUG_fy623ea8oBqaiz/preview"></iframe>
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag">#空窗期只有7天</span>
+                        <h3 class="card-title">亞梨安娜</h3>
+                        <p>看似外表光鮮紅潤、高冷難以親近，但只要咬下一口，就能發現內心極度渴望被理解的脆弱面。她的 Ex 似乎也在現場……？</p>
+                        <button class="btn" onclick="triggerFruitExplosion(event, 'pear'); showPopup('亞梨安娜的心動悄悄話：『其實，我一直在等那個懂我酸味的人。』')">查看心動宣言</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="avatar-box">
+                        <iframe src="https://drive.google.com/file/d/1q7uBTnRJ70AV3YBi-9LkgHgaKR2_B5er/preview"></iframe>
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag">#櫻桃想要 櫻桃得到</span>
+                        <h3 class="card-title">Cherry</h3>
+                        <p>精緻精美、卻容易受傷的女孩。心思極其敏感，在節目第一天就因為收到神祕簡訊而落淚，瞬間成為全場焦點。</p>
+                        <button class="btn" onclick="triggerFruitExplosion(event, 'cherry'); showPopup('Cherry的心動悄悄話：『如果可以，我希望你能Cherish me。』')">查看心動宣言</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="avatar-box">
+                        <iframe src="https://drive.google.com/file/d/1Wo44o9DLaASM0ap0orvfqTV3OmkTj_dD/preview"></iframe>
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag">#戀愛零經驗</span>
+                        <h3 class="card-title">安橘麗娜</h3>
+                        <p>自帶滑稽與幽默感，隨時都在散發正能量。就像黃澄澄的外皮一樣溫暖，但剝開外皮後，內心出乎意料地成熟細膩。</p>
+                        <button class="btn" onclick="triggerFruitExplosion(event, 'orange'); showPopup('安橘麗娜的心動悄悄話：『不要只看我甜美的一面，我也想為愛勇敢一次。』')">查看心動宣言</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="judges-section">
+            <h2 class="section-title">果園觀察團 (Judges)</h2>
+            <div class="grid">
+
+                <div class="card judge-card">
+                    <div class="avatar-box" style="background-color: #faf0d7;">
+                        <iframe src="https://drive.google.com/file/d/1vaOMZtq9b8mOnKlXFQ1W_hKVrdZt91jy/preview"></iframe>
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag judge-tag">觀察團團長 / 心理學專家</span>
+                        <h3 class="card-title">Yuki Xie</h3>
+                        <p>精準剖析每位水果成員的微表情與防衛機制。總是能一眼看穿是誰在演戲、誰又在為了前任（Ex）心痛流淚。</p>
+                        <button class="btn judge-btn" onclick="triggerFruitExplosion(event, 'all'); showPopup('崔教授的觀察筆記：『亞梨安娜關門的瞬間，眼神其實在尋求前任的認同。這是一場教科書級的口是心非。』')">聽取犀利點評</button>
+                    </div>
+                </div>
+
+                <div class="card judge-card">
+                    <div class="avatar-box" style="background-color: #faf0d7;">
+                        <iframe src="https://drive.google.com/file/d/1kn18Qi-LsyXLUlyA9LyG5h0aY90yoVhS/preview"></iframe>
+                    </div>
+                    <div class="card-body">
+                        <span class="card-tag judge-tag">感性擔當 / 知名兩性作家</span>
+                        <h3 class="card-title">Hu怕who</h3>
+                        <p>金句連發的感性評審，常與螢幕前的觀眾一起為成員的錯過而拍桌嘆息。深信「水果成熟需要時間，愛情也是。」</p>
+                        <button class="btn judge-btn" onclick="triggerFruitExplosion(event, 'all'); showPopup('Hu的感性金句：『安橘莉娜不是任性，她只是把所有的不安全感，包裝成了堅韌的外皮。』')">看共情分析</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="crew-section">
+            <h2 class="section-title">製作劇組分工表 (Crew)</h2>
+            <table class="crew-table">
+                <tr>
+                    <td class="crew-role">1. 編劇/美術/演員/攝影</td>
+                    <td class="crew-name">傳院二 李寈</td>
+                </tr>
+                <tr>
+                    <td class="crew-role">2. 編劇/美術/演員/攝影</td>
+                    <td class="crew-name">廣電三 謝雨祺</td>
+                </tr>
+                <tr>
+                    <td class="crew-role">3. 海報設計/演員</td>
+                    <td class="crew-name">統計二吳偉綾</td>
+                </tr>
+                <tr>
+                    <td class="crew-role">4. 影片剪輯/演員/攝影師</td>
+                    <td class="crew-name">廣告三 胡維峻</td>
+                </tr>
+                <tr>
+                    <td class="crew-role">5. 網頁設計/演員</td>
+                    <td class="crew-name">傳院二 文亭云</td>
+                </tr>
+            </table>
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <button class="btn" onclick="showPopup('感謝小麥這16周的爆肝教學，才讓大家看到如此甜美的果實！')">為 5 人劇組點讚</button>
+            </div>
+        </section>
+
+        <section class="bts-section">
+            <h2 class="section-title">精彩幕後花絮 (Behind The Scenes)</h2>
+            
+            <div class="slider-container">
+                <button class="slider-btn prev" onclick="changeSlide(-1)">❮</button>
+                <button class="slider-btn next" onclick="changeSlide(1)">❯</button>
+                
+                <div class="slider-item active">
+                    <iframe src="https://drive.google.com/file/d/1y7k4n7tRAmH9SrSPLLgWy_-Q55hJjoJq/preview" allowfullscreen></iframe>
+                </div>
+                
+                <div class="slider-item">
+                    <iframe src="https://drive.google.com/file/d/1Bi8DNo2xcu8a9G-jZoPvnt1t0q9MJA_s/preview" allowfullscreen></iframe>
+                </div>
+                
+                <div class="slider-item">
+                    <iframe src="https://drive.google.com/file/d/1eK4g1vzjXmzQOId3rRPF3VXn9dHsF2_4/preview" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="slider-caption-box">
+                <p class="slider-caption-title" id="slideTitle">花絮焦點 01：高跟鞋上身 戲魂就來了！</p>
+                <p class="slider-caption-text" id="slideText">這是開拍前一天，我們原本設定櫻桃是蘋果，並且要穿著高跟鞋走路才有氣勢，但計畫趕不上變化，演員表示：過過乾癮就足夠了！(誰下雨想穿高跟鞋啊？)</p>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="overlay" id="popupOverlay">
+        <div class="popup">
+            <h3>💌 來自果園的祕密簡訊</h3>
+            <p id="popupContent">這裡會顯示心動內容...</p>
+            <button class="btn" style="margin-top: 1rem;" onclick="closePopup()">關閉簡訊</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 換乘水果 Transit Fruits Production. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        /* 1. 彈窗控制邏輯 */
+        function showPopup(text) {
+            document.getElementById('popupContent').innerText = text;
+            document.getElementById('popupOverlay').style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const overlay = document.getElementById('popupOverlay');
+            if (event.target == overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+
+        /* 【解決方案 2】修正後的 Slider 影片多媒體控制邏輯 */
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slider-item');
+        
+        const slideCaptions = [
+            {
+                title: "花絮焦點 01：高跟鞋上身 戲魂就來了！",
+                text: "這是開拍前一天，我們原本設定櫻桃是蘋果，並且要穿著高跟鞋走路才有氣勢，但計畫趕不上變化，演員表示：過過乾癮就足夠了！(誰下雨想穿高跟鞋啊？)"
+            },
+            {
+                title: "花絮焦點 02：橘和櫻桃殺青囉!",
+                text: "你問為什麼照片是反的?答案是......我們也不知道，明明上傳的照片是正的，但雲端硬碟卻不肯放過我們......很有互動感吧~哈...哈...TT(顛三倒四)。"
+            },
+            {
+                title: "花絮焦點 03：我也想知道什麼這麼好笑",
+                text: "影片沒開聲音，但hen好奇什麼是能讓Yuk女王笑開懷，還有胡最後的眼神，意味深長(懷疑)"
+            }
+        ];
+
+        function changeSlide(direction) {
+            // 在換頁之前，先重刷目前這一頁的影片網址（強迫暫停，防止多支影片聲音重疊）
+            const currentIframe = slides[currentSlideIndex].querySelector('iframe');
+            if (currentIframe) {
+                const currentSrc = currentIframe.src;
+                currentIframe.src = '';
+                currentIframe.src = currentSrc;
+            }
+
+            slides[currentSlideIndex].classList.remove('active');
+            
+            currentSlideIndex += direction;
+            if (currentSlideIndex >= slides.length) {
+                currentSlideIndex = 0;
+            } else if (currentSlideIndex < 0) {
+                currentSlideIndex = slides.length - 1;
+            }
+            
+            slides[currentSlideIndex].classList.add('active');
+
+            document.getElementById('slideTitle').innerText = slideCaptions[currentSlideIndex].title;
+            document.getElementById('slideText').innerText = slideCaptions[currentSlideIndex].text;
+        }
+
+
+        /* 3. 按鈕點擊四周噴發爆炸粒子特效（僅保留給成員與評審使用） */
+        const canvas = document.getElementById('effectCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const fruitEmojis = {
+            cherry: ['🍒'],
+            pear: ['🍐'],
+            orange: ['🍊'],
+            all: ['🍒', '🍐', '🍊']
+        };
+
+        let particles = [];
+
+        class ExplodingFruit {
+            constructor(x, y, emoji) {
+                this.x = x;
+                this.y = y;
+                this.emoji = emoji;
+                this.size = Math.random() * 10 + 20; 
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 4; 
+                this.speedX = Math.cos(angle) * speed;
+                this.speedY = Math.sin(angle) * speed;
+                
+                this.gravity = 0.25;
+                this.friction = 0.98;
+                
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = Math.random() * 0.2 - 0.1;
+                this.opacity = 1;
+            }
+
+            update() {
+                this.speedX *= this.friction;
+                this.speedY *= this.friction;
+                this.speedY += this.gravity; 
+                
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.rotation += this.rotationSpeed;
+                
+                this.opacity -= 0.015;
+            }
+
+            draw() {
+                if (this.opacity <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.font = `${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        function triggerFruitExplosion(event, type) {
+            const pool = fruitEmojis[type] || fruitEmojis['all'];
+            const clickX = event.clientX;
+            const clickY = event.clientY;
+
+            for (let i = 0; i < 25; i++) {
+                const randomEmoji = pool[Math.floor(Math.random() * pool.length)];
+                particles.push(new ExplodingFruit(clickX, clickY, randomEmoji));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                
+                if (particles[i].opacity <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
+
+
